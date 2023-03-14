@@ -1,0 +1,74 @@
+package ru.pulsar.jenkins.library.steps
+
+import hudson.FilePath
+import ru.pulsar.jenkins.library.IStepExecutor
+import ru.pulsar.jenkins.library.configuration.JobConfiguration
+import ru.pulsar.jenkins.library.ioc.ContextRegistry
+import ru.pulsar.jenkins.library.utils.FileUtils
+import ru.pulsar.jenkins.library.utils.Logger
+
+class PublishAllure implements Serializable {
+
+    private final JobConfiguration config;
+    private IStepExecutor steps;
+
+    PublishAllure(JobConfiguration config) {
+        this.config = config
+    }
+
+    def run() {
+
+        Logger.printLocation()
+
+        if (config == null) {
+            Logger.println("jobConfiguration is not initialized")
+            return
+        }
+
+        steps = ContextRegistry.getContext().getStepExecutor()
+
+        if (config.stageFlags.initSteps) {
+            safeUnstash('init-allure')
+        }
+        if (config.stageFlags.bdd) {
+            safeUnstash('bdd-allure')
+        }
+        if (config.stageFlags.smoke)//(config.stageFlags.smoke && config.smokeTestOptions.publishToAllureReport) 
+        {
+            safeUnstash(SmokeTest.SMOKE_ALLURE_STASH)
+        }
+
+        def env = steps.env();
+
+        FilePath allurePath = FileUtils.getFilePath("$env.WORKSPACE/build/out/allure/smoke")
+        if (!allurePath.exists()) {
+            Logger.println("Отсутствуют результаты allure для публикации")
+            return
+        }
+
+        List<String> results = new ArrayList<>();
+
+        allurePath.listDirectories().each { FilePath filePath ->
+            results.add(FileUtils.getLocalPath(filePath))
+        }
+        
+        results.add(FileUtils.getLocalPath(allurePath))
+
+        if (!results.isEmpty()) {
+            Logger.println("Существуют результаты allure!")
+        }
+
+        FilePath syntaxPath = FileUtils.getFilePath("$env.WORKSPACE/build/out/allure/syntax-check")
+        results.add(FileUtils.getLocalPath(syntaxPath))
+
+        steps.allure(results)
+    }
+
+    private void safeUnstash(String stashName) {
+        try {
+            steps.unstash(stashName)
+        } catch (Exception ignored) {
+            Logger.println("Can't unstash $stashName")
+        }
+    }
+}

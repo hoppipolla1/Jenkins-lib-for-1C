@@ -1,0 +1,61 @@
+{
+  "v8version": "8.3.14.1944",
+  "edtVersion": "2021.3.4:x86_64",
+  "secrets": {
+    "storage": "1234"
+  },
+  "stages": {
+    "syntaxCheck": true
+  },
+  "timeout": {
+    "zipInfoBase": 123
+  },
+  "initInfobase": {
+    "runMigration": false,
+    "additionalInitializationSteps": [
+      "vanessa --settings ./tools/vrunner.first.json"
+    ]
+  },
+  "sonarqube": {
+    "sonarQubeInstallation": "qa",
+    "branchAnalysisConfiguration": "auto"
+  },
+  "syntaxCheck": {
+    "checkModes": [
+      "-ThickClient",  
+      "-ThinClient",
+      "-WebClient",
+      "-Server"
+  ]
+  },
+  "resultsTransform": {
+    "removeSupport": false
+  },
+  "smoke": {
+    "vrunnerSettings": "./tools/vrunner-smoke.json",
+    "publishToAllureReport": false,
+    "publishToJUnitReport": true
+  },
+  "notifications": {
+    "email": {
+      "onAlways": true,
+      "alwaysOptions": {
+        "attachLog": true,
+        "directRecipients": [
+          "1@1.com",
+          "2@1.com"
+        ]
+      },
+      "failureOptions": {
+        "recipientProviders": [
+          "developers"
+        ]
+      }
+    },
+    "telegram": {
+      "onAlways": false,
+      "onFailure": true
+    }
+  },
+  "logosConfig": "logger.rootLogger=DEBUG"
+}
